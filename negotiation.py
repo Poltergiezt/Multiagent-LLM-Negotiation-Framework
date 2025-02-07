@@ -32,9 +32,8 @@ class Negotiation:
         self.proposalFormatExample = None # Initiate the proposal formatting example
         self.missingProposalWarning = (
             "\n\n**ERROR: MISSING PROPOSAL**\n"
-            "YOUR RESPONSE DID NOT INCLUDE A PROPOSAL.\n"
-            "You MUST include a proposal in every response.\n"
-            f"Please format your proposal as follows:{self.formattingReminder}"
+            "YOUR RESPONSE DID NOT INCLUDE A JSON OBJECT WITH THE PROPOSED TASKS. "
+            "Reformat your previous response to include the proposed tasks in the JSON format"
         )
         
     def updateAgentInstructions(self): # Add the negotiation tasks to the agent's instructions
@@ -205,33 +204,19 @@ class Negotiation:
                                 print(f"{Fore.RED}Proposal that caused error: \n{potentialProposal}{Fore.RESET}")   
                 elif potentialProposal == NegotiationFlag.INVALID_PROPOSAL_FORMAT:
                     print(f"{Fore.RED}Invalid proposal: Invalid Proposal Format{Fore.RESET}")
-                    helperMessage = f"""IMPORTANT: You must use the following JSON format with NO exceptions:
-json
-{{
-    '{agent1Key}': ['Task A', 'Task B'],
-    '{agent2Key}': ['Task C', 'Task D'],
-    'has_deal': 'False'
-}}
-Replace the alphabetized task names with the actual task names you want to propose.
-\nTry Again"""
+                    helperMessage = f"""IMPORTANT: Remember to include the JSON object with the proposed tasks in your response.
+                    Remember to include all tasks in your proposal. These are the tasks for this negotiation: {', '.join([task.mappedName for task in self.tasks])} \n\nReformat your previous response to include the proposed tasks in the JSON format"""
                     self.clearAllSystemMessages(currentAgent)
                     currentAgent.addToChatHistory('system', helperMessage)
                 elif potentialProposal == NegotiationFlag.INVALID_AGENT_NAME:
                     print(f"{Fore.RED}Invalid proposal: Invalid Agent Name{Fore.RESET}")
-                    helperMessage = f"""IMPORTANT: You must use the following JSON format with NO exceptions. TAKE SPECIAL CARE TO WRITE THE NAMES CORRECTLY, exactly as shown below. {self.formattingReminder}\n\nTry Again"""
+                    helperMessage = f"""IMPORTANT: Remember to include the JSON object with the proposed tasks in your response.\n\n Make sure you are using the correct agent names in your proposal.\n\n Reformat your previous response to include the proposed tasks in the JSON format"""
                     self.clearAllSystemMessages(currentAgent)
                     currentAgent.addToChatHistory('system', helperMessage)
                 elif potentialProposal == NegotiationFlag.PROPOSAL_NOT_FOUND: # If proposal is not found, check if one is required 
                     if (self.hasInitialProposal and self.numIterations == 0): # if we need an initial allocation in the first round
                         print(f"{Fore.RED}Invalid proposal: Proposal Not Found In Initial Message{Fore.RESET}")
-                        helperMessage = f"""IMPORTANT: YOU ENTERED AN INVALID PROPOSAL. Just this once, you must propose the following initial proposal exactly as follows: 
-json
-{{
-    '{agent1Key}': [{', '.join([f'"{task.mappedName}"' for task in self.initialProposal.agent1Tasks])}],
-    '{agent2Key}': [{', '.join([f'"{task.mappedName}"' for task in self.initialProposal.agent2Tasks])}],
-    'has_deal': 'False'
-    
-}}\nMAKE SURE YOU ENTER THE TASKS EXACLTY AS SHOWN.\n\nTry Again"""
+                        helperMessage = self.missingProposalWarning
                         self.clearAllSystemMessages(currentAgent)
                         currentAgent.addToChatHistory('system', helperMessage)
                     else:
